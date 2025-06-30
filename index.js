@@ -94,7 +94,7 @@ app.get('/', (req, res) => {
   res.render('index', { sites });
 });
 
-app.post('/add-site', (req, res) => {
+app.post('/add', (req, res) => {
   const { name, url } = req.body;
   const sites = readSites();
   
@@ -112,7 +112,7 @@ app.post('/add-site', (req, res) => {
   res.redirect('/');
 });
 
-app.post('/delete-site/:id', (req, res) => {
+app.post('/delete/:id', (req, res) => {
   const { id } = req.params;
   let sites = readSites();
   sites = sites.filter(site => site.id !== id);
