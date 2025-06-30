@@ -316,7 +316,7 @@
   <div class="container">
     <div class="add-site-form fade-in">
       <h2 style="margin-bottom:20px;">Add New Monitor</h2>
-      <form action="/add-site" method="POST">
+      <form action="/add" method="POST">
         <div class="form-group">
           <label for="siteName">Site Name</label>
           <input type="text" class="form-control" id="siteName" name="name" placeholder="Example: My Awesome Website" required>
@@ -384,7 +384,7 @@
                 <a href="/site/<%= site.id %>" class="action-btn btn-view">
                   <i class="fas fa-chart-bar"></i> View Monitor
                 </a>
-                <form action="/delete-site/<%= site.id %>" method="POST" style="display:inline;">
+                <form action="/delete/<%= site.id %>" method="POST" style="display:inline;">
                   <button type="submit" class="action-btn btn-delete">
                     <i class="fas fa-trash"></i> Delete
                   </button>
