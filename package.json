@@ -6,6 +6,7 @@
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
     "node-cron": "^4.1.1",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "@vercel/kv": "^3.0.0"
   }
 }
