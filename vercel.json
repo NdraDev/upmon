@@ -1,4 +1,4 @@
-// vercel.json (Konfigurasi Vercel)
+
 {
   "version": 2,
   "builds": [
