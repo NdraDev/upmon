@@ -1,34 +1,27 @@
-// index.js (Server Utama)
+// index.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
 const axios = require('axios');
 const cron = require('node-cron');
+const { kv } = require('@vercel/kv');
 
 const app = express();
-const PORT = process.env.PORT || 1029;
-const DB_PATH = path.join(__dirname, 'sites.json');
-
-// Setup database jika belum ada
-if (!fs.existsSync(DB_PATH)) {
-  fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
-}
+const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Baca data situs
-function readSites() {
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+// Fungsi untuk mendapatkan semua sites
+async function getAllSites() {
+  const sites = await kv.get('sites') || [];
+  return sites;
 }
 
-// Simpan data situs
-function saveSites(sites) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(sites, null, 2));
+// Fungsi untuk menyimpan sites
+async function saveSites(sites) {
+  await kv.set('sites', sites);
 }
 
 // Fungsi pengecekan situs
@@ -55,7 +48,7 @@ async function checkSite(site) {
 // Cron job pengecekan setiap 1 menit
 cron.schedule('* * * * *', async () => {
   console.log('Running scheduled check...');
-  const sites = readSites();
+  const sites = await getAllSites();
   
   for (const site of sites) {
     const result = await checkSite(site);
@@ -80,61 +73,96 @@ cron.schedule('* * * * *', async () => {
     site.responseTime = result.responseTime;
   }
   
-  saveSites(sites);
+  await saveSites(sites);
 });
 
 // Routes
-app.get('/', (req, res) => {
-  const sites = readSites().map(site => ({
-    ...site,
-    uptime: calculateUptime(site.checks),
-    dailyStatus: calculateDailyStatus(site.checks)
-  }));
-  
-  res.render('index', { sites });
-});
-
-app.post('/add', (req, res) => {
-  const { name, url } = req.body;
-  const sites = readSites();
-  
-  sites.push({
-    id: Date.now().toString(),
-    name,
-    url,
-    createdAt: new Date().toISOString(),
-    checks: [],
-    lastStatus: 'unknown',
-    responseTime: 0
-  });
-  
-  saveSites(sites);
-  res.redirect('/');
-});
-
-app.post('/delete/:id', (req, res) => {
-  const { id } = req.params;
-  let sites = readSites();
-  sites = sites.filter(site => site.id !== id);
-  saveSites(sites);
-  res.redirect('/');
-});
-
-app.get('/site/:id', (req, res) => {
-  const sites = readSites();
-  const site = sites.find(s => s.id === req.params.id);
-  
-  if (!site) {
-    return res.status(404).send('Site not found');
+app.get('/', async (req, res) => {
+  try {
+    const sites = await getAllSites();
+    
+    const sitesWithStats = sites.map(site => ({
+      ...site,
+      uptime: calculateUptime(site.checks || []),
+      dailyStatus: calculateDailyStatus(site.checks || [])
+    }));
+    
+    res.render('index', { sites: sitesWithStats });
+  } catch (err) {
+    console.error('Error loading sites:', err);
+    res.status(500).send('Internal Server Error');
   }
-  
-  const stats = calculateStatistics(site);
-  res.render('site-details', { site, stats });
+});
+
+app.post('/add-site', async (req, res) => {
+  try {
+    const { name, url } = req.body;
+    
+    // Validasi URL
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return res.status(400).send('URL must start with http:// or https://');
+    }
+    
+    const sites = await getAllSites();
+    
+    // Cek apakah site sudah ada
+    if (sites.some(s => s.url === url)) {
+      return res.status(400).send('Site already monitored');
+    }
+    
+    const newSite = {
+      id: Date.now().toString(),
+      name,
+      url,
+      createdAt: new Date().toISOString(),
+      checks: [],
+      lastStatus: 'unknown',
+      responseTime: 0
+    };
+    
+    sites.push(newSite);
+    await saveSites(sites);
+    
+    res.redirect('/');
+  } catch (err) {
+    console.error('Error adding site:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/delete-site/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let sites = await getAllSites();
+    sites = sites.filter(site => site.id !== id);
+    await saveSites(sites);
+    res.redirect('/');
+  } catch (err) {
+    console.error('Error deleting site:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/site/:id', async (req, res) => {
+  try {
+    const sites = await getAllSites();
+    const site = sites.find(s => s.id === req.params.id);
+    
+    if (!site) {
+      return res.status(404).send('Site not found');
+    }
+    
+    const stats = calculateStatistics(site);
+    res.render('site-details', { site, stats });
+  } catch (err) {
+    console.error('Error loading site details:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Fungsi statistik
 function calculateUptime(checks) {
-  if (!checks || checks.length === 0) return 100;
+  if (checks.length === 0) return 100;
   const upCount = checks.filter(c => c.status === 'up').length;
   return (upCount / checks.length * 100).toFixed(2);
 }
@@ -150,7 +178,8 @@ function calculateDailyStatus(checks) {
 }
 
 function calculateStatistics(site) {
-  if (!site.checks || site.checks.length === 0) {
+  const checks = site.checks || [];
+  if (checks.length === 0) {
     return {
       uptime24h: 0,
       uptime7d: 0,
@@ -161,24 +190,24 @@ function calculateStatistics(site) {
   }
   
   const now = Date.now();
-  const checks24h = site.checks.filter(c => 
+  const checks24h = checks.filter(c => 
     now - new Date(c.timestamp).getTime() <= 24 * 60 * 60 * 1000
   );
   
-  const checks7d = site.checks.filter(c => 
+  const checks7d = checks.filter(c => 
     now - new Date(c.timestamp).getTime() <= 7 * 24 * 60 * 60 * 1000
   );
   
-  const checks30d = site.checks;
+  const checks30d = checks;
   
   return {
     uptime24h: calculateUptime(checks24h),
     uptime7d: calculateUptime(checks7d),
     uptime30d: calculateUptime(checks30d),
     avgResponse: Math.round(
-      checks24h.reduce((sum, c) => sum + c.responseTime, 0) / checks24h.length || 0
+      checks24h.reduce((sum, c) => sum + c.responseTime, 0) / (checks24h.length || 1)
     ),
-    outages: site.checks.filter(c => c.status === 'down').length
+    outages: checks.filter(c => c.status === 'down').length
   };
 }
 
