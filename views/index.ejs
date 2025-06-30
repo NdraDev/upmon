@@ -1,4 +1,3 @@
-<!-- views/index.ejs (Halaman Utama) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,17 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Uptime Monitor</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --primary: #5e72e4;
+      --primary-dark: #4a5bd9;
       --success: #2dce89;
       --danger: #f5365c;
       --warning: #fb6340;
       --dark: #32325d;
       --light: #f7fafc;
       --gray: #adb5bd;
+      --light-gray: #f8f9fe;
+      --dark-gray: #6c757d;
+      --border: #e9ecef;
     }
     
     * {
@@ -27,21 +30,25 @@
     
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f8f9fe;
+      background-color: var(--light-gray);
       color: var(--dark);
+      line-height: 1.6;
     }
     
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 15px;
     }
     
     header {
       background: linear-gradient(87deg, var(--primary) 0, #825ee4 100%);
       color: white;
-      padding: 20px 0;
+      padding: 15px 0;
       box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     
     .header-content {
@@ -51,7 +58,7 @@
     }
     
     .logo {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -59,36 +66,40 @@
     
     .logo i {
       margin-right: 10px;
+      font-size: 1.4rem;
     }
     
     .btn {
       display: inline-block;
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: 30px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
       text-decoration: none;
       text-align: center;
+      font-size: 0.9rem;
+      border: none;
     }
     
     .btn-primary {
       background-color: var(--primary);
       color: white;
-      border: none;
     }
     
     .btn-primary:hover {
+      background-color: var(--primary-dark);
       transform: translateY(-2px);
       box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
     }
     
     .add-site-form {
       background: white;
-      border-radius: 10px;
-      padding: 30px;
-      margin: 30px 0;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      padding: 25px;
+      margin: 25px 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      animation: fadeIn 0.6s ease-out;
     }
     
     .form-group {
@@ -99,58 +110,68 @@
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
+      color: var(--dark);
     }
     
     .form-control {
       width: 100%;
       padding: 12px 15px;
-      border: 1px solid #e1e5eb;
-      border-radius: 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
       font-size: 16px;
       transition: border-color 0.3s;
+      background-color: var(--light);
     }
     
     .form-control:focus {
       border-color: var(--primary);
       outline: none;
-      box-shadow: 0 0 0 2px rgba(94, 114, 228, 0.2);
+      box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.2);
     }
     
     .sites-list {
-      margin: 40px 0;
+      margin: 35px 0;
     }
     
     .section-title {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title i {
+      margin-right: 10px;
+      color: var(--primary);
     }
     
     .site-card {
       background: white;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       margin-bottom: 20px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
       transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid var(--border);
     }
     
     .site-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 25px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
     }
     
     .site-header {
-      padding: 20px;
+      padding: 18px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #e1e5eb;
+      border-bottom: 1px solid var(--border);
     }
     
     .site-name {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -159,27 +180,31 @@
     .site-name i {
       margin-right: 10px;
       color: var(--gray);
+      font-size: 1.2rem;
     }
     
     .status-badge {
-      padding: 6px 12px;
+      padding: 6px 15px;
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
+      display: flex;
+      align-items: center;
     }
     
     .status-up {
-      background-color: rgba(45, 206, 137, 0.1);
+      background-color: rgba(45, 206, 137, 0.15);
       color: var(--success);
     }
     
     .status-down {
-      background-color: rgba(245, 54, 92, 0.1);
+      background-color: rgba(245, 54, 92, 0.15);
       color: var(--danger);
+      animation: pulse 2s infinite;
     }
     
     .status-unknown {
-      background-color: rgba(251, 99, 64, 0.1);
+      background-color: rgba(251, 99, 64, 0.15);
       color: var(--warning);
     }
     
@@ -192,16 +217,20 @@
     
     .stat-item {
       text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: var(--light);
     }
     
     .stat-value {
-      font-size: 1.8rem;
+      font-size: 1.7rem;
       font-weight: 700;
       margin-bottom: 5px;
+      color: var(--dark);
     }
     
     .stat-label {
-      color: var(--gray);
+      color: var(--dark-gray);
       font-size: 0.9rem;
     }
     
@@ -217,22 +246,28 @@
       height: 100%;
       background-color: var(--success);
       border-radius: 5px;
+      transition: width 0.8s ease;
     }
     
     .site-footer {
       padding: 15px 20px;
-      background-color: #f8f9fe;
+      background-color: var(--light);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-top: 1px solid var(--border);
     }
     
     .action-btn {
-      padding: 6px 12px;
-      border-radius: 5px;
+      padding: 8px 15px;
+      border-radius: 6px;
       font-size: 0.9rem;
       cursor: pointer;
       transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     
     .btn-view {
@@ -245,28 +280,50 @@
       background-color: rgba(245, 54, 92, 0.1);
       color: var(--danger);
       border: none;
-      margin-left: 10px;
     }
     
     .btn-view:hover, .btn-delete:hover {
-      opacity: 0.8;
+      opacity: 0.9;
+      transform: translateY(-2px);
     }
     
     .site-url {
-      color: var(--gray);
+      color: var(--dark-gray);
       font-size: 0.9rem;
+      max-width: 60%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     .no-sites {
       text-align: center;
       padding: 50px 20px;
       color: var(--gray);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
     
     .no-sites i {
-      font-size: 3rem;
+      font-size: 3.5rem;
       margin-bottom: 20px;
-      opacity: 0.3;
+      opacity: 0.2;
+    }
+    
+    .no-sites h3 {
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .no-sites p {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .actions-container {
+      display: flex;
+      gap: 10px;
     }
     
     /* Animasi */
@@ -275,27 +332,80 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
     .fade-in {
       animation: fadeIn 0.5s ease-out forwards;
+      opacity: 0;
     }
     
     .delay-1 { animation-delay: 0.1s; }
     .delay-2 { animation-delay: 0.2s; }
     .delay-3 { animation-delay: 0.3s; }
     
-    /* Responsif */
+    /* Responsif untuk mobile */
     @media (max-width: 768px) {
-      .site-body {
-        grid-template-columns: 1fr;
-      }
-      
       .header-content {
         flex-direction: column;
+        gap: 15px;
         text-align: center;
       }
       
       .logo {
-        margin-bottom: 15px;
+        justify-content: center;
+      }
+      
+      .site-body {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+      
+      .stat-value {
+        font-size: 1.5rem;
+      }
+      
+      .site-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      
+      .site-url {
+        max-width: 100%;
+      }
+      
+      .actions-container {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .site-body {
+        grid-template-columns: 1fr;
+      }
+      
+      .stat-item {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .stat-value {
+        margin-bottom: 0;
+      }
+      
+      .add-site-form {
+        padding: 20px;
+      }
+      
+      .section-title {
+        font-size: 1.25rem;
       }
     }
   </style>
@@ -308,15 +418,19 @@
           <i class="fas fa-heartbeat"></i>
           <span>Uptime Monitor</span>
         </div>
-        <a href="#" class="btn btn-primary">Dashboard</a>
+        <a href="#" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Add Monitor
+        </a>
       </div>
     </div>
   </header>
   
   <div class="container">
-    <div class="add-site-form fade-in">
-      <h2 style="margin-bottom:20px;">Add New Monitor</h2>
-      <form action="/add" method="POST">
+    <div class="add-site-form">
+      <h2 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-plus-circle"></i> Add New Monitor
+      </h2>
+      <form action="/add-site" method="POST">
         <div class="form-group">
           <label for="siteName">Site Name</label>
           <input type="text" class="form-control" id="siteName" name="name" placeholder="Example: My Awesome Website" required>
@@ -325,18 +439,22 @@
           <label for="siteUrl">Site URL</label>
           <input type="url" class="form-control" id="siteUrl" name="url" placeholder="https://example.com" required>
         </div>
-        <button type="submit" class="btn btn-primary">Add Monitor</button>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          <i class="fas fa-plus"></i> Add Monitor
+        </button>
       </form>
     </div>
     
     <div class="sites-list">
-      <h2 class="section-title">Your Monitors</h2>
+      <h2 class="section-title">
+        <i class="fas fa-tachometer-alt"></i> Your Monitors
+      </h2>
       
       <% if (sites.length === 0) { %>
         <div class="no-sites fade-in">
           <i class="fas fa-search"></i>
           <h3>No monitors yet</h3>
-          <p>Add your first website to start monitoring</p>
+          <p>Add your first website to start monitoring its uptime and performance</p>
         </div>
       <% } else { %>
         <% sites.forEach((site, index) => { %>
@@ -355,8 +473,10 @@
             
             <div class="site-body">
               <div class="stat-item">
-                <div class="stat-value"><%= site.uptime %>%</div>
-                <div class="stat-label">Uptime (30d)</div>
+                <div>
+                  <div class="stat-value"><%= site.uptime %>%</div>
+                  <div class="stat-label">Uptime (30d)</div>
+                </div>
                 <div class="uptime-bar">
                   <div class="uptime-fill" style="width: <%= site.uptime %>%"></div>
                 </div>
@@ -380,11 +500,11 @@
             
             <div class="site-footer">
               <div class="site-url"><%= site.url %></div>
-              <div>
+              <div class="actions-container">
                 <a href="/site/<%= site.id %>" class="action-btn btn-view">
-                  <i class="fas fa-chart-bar"></i> View Monitor
+                  <i class="fas fa-chart-bar"></i> Details
                 </a>
-                <form action="/delete/<%= site.id %>" method="POST" style="display:inline;">
+                <form action="/delete-site/<%= site.id %>" method="POST" style="display:inline;">
                   <button type="submit" class="action-btn btn-delete">
                     <i class="fas fa-trash"></i> Delete
                   </button>
@@ -396,5 +516,17 @@
       <% } %>
     </div>
   </div>
+
+  <script>
+    // Inisialisasi animasi
+    document.querySelectorAll('.fade-in').forEach(el => {
+      el.style.opacity = '0';
+    });
+    
+    // Animasi untuk status down
+    document.querySelectorAll('.status-down').forEach(el => {
+      el.classList.add('pulse');
+    });
+  </script>
 </body>
 </html>
